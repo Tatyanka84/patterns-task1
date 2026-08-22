@@ -12,9 +12,9 @@ public class DataGenerator {
     private DataGenerator() {
     }
 
-    public static String generateDate(int shift) {
+    public static String generateDate(int daysToAdd) {
         return LocalDate.now()
-                .plusDays(shift)
+                .plusDays(daysToAdd)
                 .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 

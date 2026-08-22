@@ -1,17 +1,18 @@
 package ru.netology.delivery;
 
+import com.codeborne.selenide.Selectors;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Keys;
 
 import java.time.Duration;
 
-import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selectors.byText;
+import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 
-public class DeliveryTest {
+class DeliveryTest {
 
     @BeforeEach
     void setup() {
@@ -19,19 +20,17 @@ public class DeliveryTest {
     }
 
     @Test
-    void shouldReplanMeeting() {
+    @DisplayName("Should successfully plan meeting")
+    void shouldSuccessfullyPlanMeeting() {
         var validUser = DataGenerator.Registration.generateUser("ru");
+        var firstMeetingDate = DataGenerator.generateDate(4);
+        var secondMeetingDate = DataGenerator.generateDate(7);
 
-        String firstMeetingDate = DataGenerator.generateDate(4);
-        String secondMeetingDate = DataGenerator.generateDate(7);
-
-        // Первое заполнение формы
         $("[data-test-id='city'] input")
                 .setValue(validUser.getCity());
+        $("[data-test-id='date'] input").press(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE);
 
         $("[data-test-id='date'] input")
-                .press(Keys.chord(Keys.SHIFT, Keys.HOME))
-                .press(Keys.DELETE)
                 .setValue(firstMeetingDate);
 
         $("[data-test-id='name'] input")
@@ -42,41 +41,37 @@ public class DeliveryTest {
 
         $("[data-test-id='agreement']")
                 .click();
+        $(Selectors.byText("Запланировать")).click();
+        $(Selectors.withText("Успешно!")).shouldBe(visible, Duration.ofSeconds(15));
 
-        $(byText("Запланировать"))
-                .shouldBe(visible, Duration.ofSeconds(15))
-                .click();
 
-        $(byText("Успешно!"))
-                .shouldBe(visible, Duration.ofSeconds(15));
+        $("[data-test-id='success-notification'] .notification__content")
 
-        $(byText("Встреча успешно запланирована на"))
-                .shouldBe(visible, Duration.ofSeconds(15));
-
-        $(byText(firstMeetingDate))
-                .shouldBe(visible, Duration.ofSeconds(15));
+                .shouldHave(
+                        exactText(
+                                "Встреча успешно запланирована на "
+                                        + firstMeetingDate
+                        )
+                ).shouldBe(visible);
+        $("[data-test-id='date'] input").press(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE);
 
         $("[data-test-id='date'] input")
-                .press(Keys.chord(Keys.SHIFT, Keys.HOME))
-                .press(Keys.DELETE)
                 .setValue(secondMeetingDate);
+        $(Selectors.byText("Запланировать")).click();
 
-        $(byText("Запланировать"))
-                .shouldBe(visible, Duration.ofSeconds(15))
+        $("[data-test-id='replan-notification'] .notification__content")
+
+                .shouldHave(
+                        text(
+                                "У вас уже запланирована встреча на другую дату. Перепланировать?"))
+
+                .shouldBe(visible);
+        $("[data-test-id='replan-notification'] button")
                 .click();
+        $("[data-test-id='success-notification'] .notification__content")
 
-        $(byText("Перепланировать"))
-                .shouldBe(visible, Duration.ofSeconds(15))
-                .click();
+                .shouldHave(exactText("Встреча успешно запланирована на " + secondMeetingDate)).shouldBe(visible);
 
-        $(byText("Успешно!"))
-                .shouldBe(visible, Duration.ofSeconds(15));
-
-        $(byText("Встреча успешно запланирована на"))
-                .shouldBe(visible, Duration.ofSeconds(15));
-
-        $(byText(secondMeetingDate))
-                .shouldBe(visible, Duration.ofSeconds(15));
     }
 }
 
